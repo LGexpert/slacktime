@@ -92,3 +92,55 @@ export interface ApiVideoDetail extends ApiVideo {
   lyrics: ApiLyricLine[]
   relatedVideos: ApiVideo[]
 }
+
+export type ThemePreference = 'system' | 'light' | 'dark'
+
+export interface ApiUserProfile {
+  displayName: string | null
+  avatarUrl: string | null
+  bio: string | null
+  themePreference: ThemePreference
+}
+
+export interface ApiUser {
+  id: string
+  email: string
+  profile: ApiUserProfile | null
+}
+
+export interface ApiMeResponse {
+  user: ApiUser | null
+}
+
+export interface ApiCollectionVideo extends ApiVideo {
+  addedAt: string | null
+}
+
+export interface ApiPlaylistSummary {
+  id: string
+  title: string
+  description: string | null
+  isPublic: boolean
+  trackCount: number
+  totalDurationSeconds: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ApiPlaylistDetailResponse {
+  playlist: {
+    id: string
+    title: string
+    description: string | null
+    isPublic: boolean
+    createdAt: string
+    updatedAt: string
+    isOwner: boolean
+  }
+  items: Array<{
+    itemId: string
+    position: number
+    addedAt: string
+    video: ApiVideo
+  }>
+}

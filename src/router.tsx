@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, redirect } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import Home, { loader as homeLoader } from './pages/Home'
 import Videos, { loader as videosLoader } from './pages/Videos'
@@ -8,14 +8,40 @@ import ArtistDetail, { loader as artistDetailLoader } from './pages/ArtistDetail
 import Genres, { loader as genresLoader } from './pages/Genres'
 import GenreDetail, { loader as genreDetailLoader } from './pages/GenreDetail'
 import Search, { loader as searchLoader } from './pages/Search'
-import Playlists from './pages/Playlists'
-import Profile from './pages/Profile'
-import Auth from './pages/Auth'
+import Profile, { loader as profileLoader } from './pages/Profile'
+import Settings, { loader as settingsLoader } from './pages/Settings'
+import Favorites, { loader as favoritesLoader } from './pages/Favorites'
+import Playlists, { loader as playlistsLoader } from './pages/Playlists'
+import PlaylistDetail, { loader as playlistDetailLoader } from './pages/PlaylistDetail'
+import AuthSignIn, { action as signInAction } from './pages/AuthSignIn'
+import AuthSignUp, { action as signUpAction } from './pages/AuthSignUp'
+import AuthReset, { action as resetAction } from './pages/AuthReset'
+import { apiGet } from './lib/api'
+import type { ApiMeResponse } from './lib/api-types'
+
+export async function rootLoader() {
+  try {
+    const res = await apiGet<ApiMeResponse>('/api/me')
+    return { user: res.user }
+  } catch {
+    return { user: null }
+  }
+}
+
+export async function requireAuthLoader() {
+  const res = await apiGet<ApiMeResponse>('/api/me')
+  if (!res.user) {
+    throw redirect('/auth/sign-in')
+  }
+  return { user: res.user }
+}
 
 const router = createBrowserRouter([
   {
+    id: 'root',
     path: '/',
     element: <Layout />,
+    loader: rootLoader,
     children: [
       {
         index: true,
@@ -58,16 +84,53 @@ const router = createBrowserRouter([
         loader: searchLoader,
       },
       {
+        path: 'favorites',
+        element: <Favorites />,
+        loader: favoritesLoader,
+      },
+      {
         path: 'playlists',
         element: <Playlists />,
+        loader: playlistsLoader,
+      },
+      {
+        path: 'playlists/:playlistId',
+        element: <PlaylistDetail />,
+        loader: playlistDetailLoader,
       },
       {
         path: 'profile',
         element: <Profile />,
+        loader: profileLoader,
+      },
+      {
+        path: 'settings',
+        element: <Settings />,
+        loader: settingsLoader,
       },
       {
         path: 'auth',
-        element: <Auth />,
+        children: [
+          {
+            index: true,
+            loader: () => redirect('/auth/sign-in'),
+          },
+          {
+            path: 'sign-in',
+            element: <AuthSignIn />,
+            action: signInAction,
+          },
+          {
+            path: 'sign-up',
+            element: <AuthSignUp />,
+            action: signUpAction,
+          },
+          {
+            path: 'reset',
+            element: <AuthReset />,
+            action: resetAction,
+          },
+        ],
       },
     ],
   },
