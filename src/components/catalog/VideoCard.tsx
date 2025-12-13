@@ -12,7 +12,7 @@ export function VideoCard({ video }: VideoCardProps) {
   return (
     <article className="group rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark shadow-sm overflow-hidden">
       <Link
-        to={`/videos?play=${encodeURIComponent(video.slug)}`}
+        to={`/videos/${encodeURIComponent(video.slug)}`}
         className="block focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         aria-label={`Open ${video.title}`}
       >
@@ -35,7 +35,7 @@ export function VideoCard({ video }: VideoCardProps) {
         <div className="space-y-1">
           <h3 className="font-semibold leading-tight">
             <Link
-              to={`/videos?play=${encodeURIComponent(video.slug)}`}
+              to={`/videos/${encodeURIComponent(video.slug)}`}
               className="hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               {video.title}

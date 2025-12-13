@@ -78,3 +78,17 @@ export interface SearchResponse {
   artists: SearchArtistHit[]
   lyrics: SearchLyricHit[]
 }
+
+export interface ApiLyricLine {
+  id: string
+  timeMs: number
+  language: string
+  text: string
+}
+
+export interface ApiVideoDetail extends ApiVideo {
+  streamingSources: Array<{ type: string; url: string; quality?: string }>
+  thumbnails: Array<{ url: string; width: number; height: number }>
+  lyrics: ApiLyricLine[]
+  relatedVideos: ApiVideo[]
+}
