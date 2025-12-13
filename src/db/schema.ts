@@ -63,6 +63,53 @@ export const authIdentities = pgTable(
   }),
 )
 
+export const authPasswords = pgTable(
+  'auth_passwords',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    passwordHash: text('password_hash').notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    userIdx: index('auth_passwords_user_id_idx').on(t.userId),
+  }),
+)
+
+export const authSessions = pgTable(
+  'auth_sessions',
+  {
+    tokenHash: text('token_hash').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    userIdx: index('auth_sessions_user_id_idx').on(t.userId),
+    expiresIdx: index('auth_sessions_expires_at_idx').on(t.expiresAt),
+  }),
+)
+
+export const passwordResetTokens = pgTable(
+  'password_reset_tokens',
+  {
+    tokenHash: text('token_hash').primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+  },
+  (t) => ({
+    userIdx: index('password_reset_tokens_user_id_idx').on(t.userId),
+    expiresIdx: index('password_reset_tokens_expires_at_idx').on(t.expiresAt),
+  }),
+)
+
 export const userProfiles = pgTable(
   'user_profiles',
   {
@@ -341,6 +388,9 @@ export const videoRelations = pgTable(
 
 export const usersRelations = relations(users, ({ many, one }) => ({
   authIdentities: many(authIdentities),
+  password: one(authPasswords, { fields: [users.id], references: [authPasswords.userId] }),
+  sessions: many(authSessions),
+  passwordResetTokens: many(passwordResetTokens),
   profile: one(userProfiles, { fields: [users.id], references: [userProfiles.userId] }),
   playlists: many(playlists),
   favorites: many(favorites),
@@ -350,6 +400,18 @@ export const usersRelations = relations(users, ({ many, one }) => ({
 
 export const authIdentitiesRelations = relations(authIdentities, ({ one }) => ({
   user: one(users, { fields: [authIdentities.userId], references: [users.id] }),
+}))
+
+export const authPasswordsRelations = relations(authPasswords, ({ one }) => ({
+  user: one(users, { fields: [authPasswords.userId], references: [users.id] }),
+}))
+
+export const authSessionsRelations = relations(authSessions, ({ one }) => ({
+  user: one(users, { fields: [authSessions.userId], references: [users.id] }),
+}))
+
+export const passwordResetTokensRelations = relations(passwordResetTokens, ({ one }) => ({
+  user: one(users, { fields: [passwordResetTokens.userId], references: [users.id] }),
 }))
 
 export const userProfilesRelations = relations(userProfiles, ({ one }) => ({

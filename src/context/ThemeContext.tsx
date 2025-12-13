@@ -1,51 +1,76 @@
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
 type Theme = 'light' | 'dark'
+export type ThemePreference = 'system' | Theme
 
 interface ThemeContextType {
   theme: Theme
+  preference: ThemePreference
+  setPreference: (preference: ThemePreference) => void
   toggleTheme: () => void
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
+function getSystemTheme(): Theme {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+function applyTheme(theme: Theme) {
+  const root = document.documentElement
+  if (theme === 'dark') {
+    root.classList.add('dark')
+  } else {
+    root.classList.remove('dark')
+  }
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light')
+  const [preference, setPreferenceState] = useState<ThemePreference>('system')
   const [mounted, setMounted] = useState(false)
 
-  // Hydrate theme from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem('theme') as Theme | null
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const theme = useMemo<Theme>(() => {
+    return preference === 'system' ? (mounted ? getSystemTheme() : 'light') : preference
+  }, [mounted, preference])
 
-    const initialTheme = stored || (prefersDark ? 'dark' : 'light')
-    setTheme(initialTheme)
-    applyTheme(initialTheme)
+  useEffect(() => {
+    const stored = localStorage.getItem('themePreference') as ThemePreference | null
+    const initialPreference = stored || 'system'
+
+    setPreferenceState(initialPreference)
     setMounted(true)
   }, [])
 
-  const applyTheme = (newTheme: Theme) => {
-    const root = document.documentElement
-    if (newTheme === 'dark') {
-      root.classList.add('dark')
-    } else {
-      root.classList.remove('dark')
+  useEffect(() => {
+    if (!mounted) return
+
+    applyTheme(theme)
+    localStorage.setItem('themePreference', preference)
+  }, [mounted, preference, theme])
+
+  useEffect(() => {
+    if (!mounted || preference !== 'system') return
+
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const listener = () => {
+      applyTheme(getSystemTheme())
     }
-    localStorage.setItem('theme', newTheme)
+
+    media.addEventListener('change', listener)
+    return () => media.removeEventListener('change', listener)
+  }, [mounted, preference])
+
+  const setPreference = (next: ThemePreference) => {
+    setPreferenceState(next)
   }
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light'
-    setTheme(newTheme)
-    applyTheme(newTheme)
-  }
-
-  if (!mounted) {
-    return <>{children}</>
+    const next = theme === 'light' ? 'dark' : 'light'
+    setPreferenceState(next)
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, preference, setPreference, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   )

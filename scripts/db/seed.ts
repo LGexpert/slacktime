@@ -43,6 +43,9 @@ if (shouldReset) {
       tags,
       genres,
       artists,
+      password_reset_tokens,
+      auth_sessions,
+      auth_passwords,
       auth_identities,
       user_profiles,
       users
