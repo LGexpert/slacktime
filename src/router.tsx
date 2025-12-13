@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import Home, { loader as homeLoader } from './pages/Home'
 import Videos, { loader as videosLoader } from './pages/Videos'
+import VideoDetail, { loader as videoDetailLoader } from './pages/VideoDetail'
 import Artists, { loader as artistsLoader } from './pages/Artists'
 import ArtistDetail, { loader as artistDetailLoader } from './pages/ArtistDetail'
 import Genres, { loader as genresLoader } from './pages/Genres'
@@ -25,6 +26,11 @@ const router = createBrowserRouter([
         path: 'videos',
         element: <Videos />,
         loader: videosLoader,
+      },
+      {
+        path: 'videos/:slug',
+        element: <VideoDetail />,
+        loader: videoDetailLoader,
       },
       {
         path: 'artists',

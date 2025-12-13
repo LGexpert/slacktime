@@ -23,6 +23,7 @@ import {
   tags,
   videoArtists,
   videoGenres,
+  videoRelations,
   videos,
   videoTags,
 } from '../src/db/schema'
@@ -93,6 +94,20 @@ type SearchLyricHit = {
   timeMs: number
   highlightText: string
   rank: number
+}
+
+type ApiLyricLine = {
+  id: string
+  timeMs: number
+  language: string
+  text: string
+}
+
+type ApiVideoDetail = ApiVideo & {
+  streamingSources: Array<{ type: string; url: string; quality?: string }>
+  thumbnails: Array<{ url: string; width: number; height: number }>
+  lyrics: ApiLyricLine[]
+  relatedVideos: ApiVideo[]
 }
 
 let _db: DbClient | undefined
@@ -469,6 +484,180 @@ async function getArtist(db: DbClient, slug: string) {
   } satisfies ApiArtist
 }
 
+async function getVideo(db: DbClient, slug: string): Promise<ApiVideoDetail | null> {
+  const { thumbnailUrl, views, likes } = getVideoComputedColumns()
+
+  const [videoRow] = await db
+    .select({
+      id: videos.id,
+      slug: videos.slug,
+      title: videos.title,
+      description: videos.description,
+      durationSeconds: videos.durationSeconds,
+      publishedAt: videos.publishedAt,
+      thumbnailUrl,
+      views,
+      likes,
+      thumbnails: videos.thumbnails,
+      streamingSources: videos.streamingSources,
+    })
+    .from(videos)
+    .where(eq(videos.slug, slug))
+    .limit(1)
+
+  if (!videoRow) return null
+
+  const baseVideo = {
+    id: videoRow.id,
+    slug: videoRow.slug,
+    title: videoRow.title,
+    description: videoRow.description,
+    durationSeconds: videoRow.durationSeconds,
+    publishedAt: toIso(videoRow.publishedAt),
+    thumbnailUrl: videoRow.thumbnailUrl,
+    views: videoRow.views,
+    likes: videoRow.likes,
+  }
+
+  const [hydrated] = await hydrateVideos(db, [baseVideo])
+
+  const lyricsRows = await db
+    .select({
+      id: lyricLines.id,
+      timeMs: lyricLines.timeMs,
+      language: lyricLines.language,
+      text: lyricLines.text,
+    })
+    .from(lyricLines)
+    .where(eq(lyricLines.videoId, videoRow.id))
+    .orderBy(asc(lyricLines.timeMs))
+
+  const relatedVideoIds = await db
+    .select({
+      relatedVideoId: videoRelations.relatedVideoId,
+      weight: videoRelations.weight,
+    })
+    .from(videoRelations)
+    .where(eq(videoRelations.videoId, videoRow.id))
+    .orderBy(desc(videoRelations.weight))
+    .limit(6)
+
+  let relatedVideos: ApiVideo[] = []
+  if (relatedVideoIds.length > 0) {
+    const relatedRows = await db
+      .select({
+        id: videos.id,
+        slug: videos.slug,
+        title: videos.title,
+        description: videos.description,
+        durationSeconds: videos.durationSeconds,
+        publishedAt: videos.publishedAt,
+        thumbnailUrl,
+        views,
+        likes,
+      })
+      .from(videos)
+      .where(inArray(videos.id, relatedVideoIds.map((r) => r.relatedVideoId)))
+
+    const baseRelatedVideos = relatedRows.map((row) => ({
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      description: row.description,
+      durationSeconds: row.durationSeconds,
+      publishedAt: toIso(row.publishedAt),
+      thumbnailUrl: row.thumbnailUrl,
+      views: row.views,
+      likes: row.likes,
+    }))
+
+    relatedVideos = await hydrateVideos(db, baseRelatedVideos)
+  } else {
+    const genreIds = await db
+      .select({ genreId: videoGenres.genreId })
+      .from(videoGenres)
+      .where(eq(videoGenres.videoId, videoRow.id))
+      .limit(1)
+
+    const artistIds = await db
+      .select({ artistId: videoArtists.artistId })
+      .from(videoArtists)
+      .where(eq(videoArtists.videoId, videoRow.id))
+      .limit(1)
+
+    const fallbackConditions: SQL[] = [sql`${videos.id} != ${videoRow.id}`]
+    if (genreIds.length > 0) {
+      fallbackConditions.push(
+        exists(
+          db
+            .select({ one: sql`1` })
+            .from(videoGenres)
+            .where(
+              and(
+                eq(videoGenres.videoId, videos.id),
+                inArray(videoGenres.genreId, genreIds.map((g) => g.genreId)),
+              ),
+            ),
+        ),
+      )
+    }
+    if (artistIds.length > 0) {
+      fallbackConditions.push(
+        exists(
+          db
+            .select({ one: sql`1` })
+            .from(videoArtists)
+            .where(
+              and(
+                eq(videoArtists.videoId, videos.id),
+                inArray(videoArtists.artistId, artistIds.map((a) => a.artistId)),
+              ),
+            ),
+        ),
+      )
+    }
+
+    const fallbackRows = await db
+      .select({
+        id: videos.id,
+        slug: videos.slug,
+        title: videos.title,
+        description: videos.description,
+        durationSeconds: videos.durationSeconds,
+        publishedAt: videos.publishedAt,
+        thumbnailUrl,
+        views,
+        likes,
+      })
+      .from(videos)
+      .where(fallbackConditions.length > 1 ? and(...fallbackConditions) : fallbackConditions[0])
+      .orderBy(desc(views))
+      .limit(6)
+
+    const baseFallbackVideos = fallbackRows.map((row) => ({
+      id: row.id,
+      slug: row.slug,
+      title: row.title,
+      description: row.description,
+      durationSeconds: row.durationSeconds,
+      publishedAt: toIso(row.publishedAt),
+      thumbnailUrl: row.thumbnailUrl,
+      views: row.views,
+      likes: row.likes,
+    }))
+
+    relatedVideos = await hydrateVideos(db, baseFallbackVideos)
+  }
+
+  return {
+    ...hydrated,
+    thumbnails: (videoRow.thumbnails as Array<{ url: string; width: number; height: number }>) || [],
+    streamingSources: (videoRow.streamingSources as Array<{ type: string; url: string; quality?: string }>) || [],
+    lyrics: lyricsRows,
+    relatedVideos,
+  }
+}
+
 async function search(db: DbClient, filters: VideoFilters) {
   const query = filters.q?.trim() || ''
   if (!query) {
@@ -594,20 +783,24 @@ async function search(db: DbClient, filters: VideoFilters) {
     lyricVideoRows.map((row) => [row.id, { slug: row.slug, title: row.title, thumbnailUrl: row.thumbnailUrl }]),
   )
 
-  const lyricHits: SearchLyricHit[] = lyricRows
+  const lyricHits = lyricRows
     .map((row) => {
       const video = lyricVideosById.get(row.videoId)
       if (!video) return null
 
       return {
         lineId: row.lineId,
-        video,
+        video: {
+          slug: video.slug,
+          title: video.title,
+          thumbnailUrl: video.thumbnailUrl ?? undefined,
+        },
         timeMs: row.timeMs,
         rank: row.rank,
         highlightText: sanitizeHeadline(row.highlightText),
-      } satisfies SearchLyricHit
+      }
     })
-    .filter((row): row is SearchLyricHit => Boolean(row))
+    .filter((row): row is NonNullable<typeof row> => Boolean(row))
 
   return {
     query,
@@ -619,7 +812,7 @@ async function search(db: DbClient, filters: VideoFilters) {
       totalPages: Math.max(1, Math.ceil(total / pageSize)),
     },
     artists: artistHits,
-    lyrics: lyricHits,
+    lyrics: lyricHits as SearchLyricHit[],
   }
 }
 
@@ -720,6 +913,17 @@ async function handleApiRequest(req: IncomingMessage, res: ServerResponse) {
       return
     }
     respondJson(res, 200, artist)
+    return
+  }
+
+  const videoMatch = pathname.match(/^\/api\/videos\/([^/]+)$/)
+  if (videoMatch) {
+    const video = await getVideo(db, decodeURIComponent(videoMatch[1]))
+    if (!video) {
+      respondJson(res, 404, { error: 'Video not found' })
+      return
+    }
+    respondJson(res, 200, video)
     return
   }
 
