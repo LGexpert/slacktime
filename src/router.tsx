@@ -1,9 +1,12 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { Layout } from './components/Layout'
-import Home from './pages/Home'
-import Videos from './pages/Videos'
-import Artists from './pages/Artists'
-import Genres from './pages/Genres'
+import Home, { loader as homeLoader } from './pages/Home'
+import Videos, { loader as videosLoader } from './pages/Videos'
+import Artists, { loader as artistsLoader } from './pages/Artists'
+import ArtistDetail, { loader as artistDetailLoader } from './pages/ArtistDetail'
+import Genres, { loader as genresLoader } from './pages/Genres'
+import GenreDetail, { loader as genreDetailLoader } from './pages/GenreDetail'
+import Search, { loader as searchLoader } from './pages/Search'
 import Playlists from './pages/Playlists'
 import Profile from './pages/Profile'
 import Auth from './pages/Auth'
@@ -11,31 +14,56 @@ import Auth from './pages/Auth'
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Layout><Home /></Layout>,
-  },
-  {
-    path: '/videos',
-    element: <Layout><Videos /></Layout>,
-  },
-  {
-    path: '/artists',
-    element: <Layout><Artists /></Layout>,
-  },
-  {
-    path: '/genres',
-    element: <Layout><Genres /></Layout>,
-  },
-  {
-    path: '/playlists',
-    element: <Layout><Playlists /></Layout>,
-  },
-  {
-    path: '/profile',
-    element: <Layout><Profile /></Layout>,
-  },
-  {
-    path: '/auth',
-    element: <Layout><Auth /></Layout>,
+    element: <Layout />,
+    children: [
+      {
+        index: true,
+        element: <Home />,
+        loader: homeLoader,
+      },
+      {
+        path: 'videos',
+        element: <Videos />,
+        loader: videosLoader,
+      },
+      {
+        path: 'artists',
+        element: <Artists />,
+        loader: artistsLoader,
+      },
+      {
+        path: 'artists/:slug',
+        element: <ArtistDetail />,
+        loader: artistDetailLoader,
+      },
+      {
+        path: 'genres',
+        element: <Genres />,
+        loader: genresLoader,
+      },
+      {
+        path: 'genres/:slug',
+        element: <GenreDetail />,
+        loader: genreDetailLoader,
+      },
+      {
+        path: 'search',
+        element: <Search />,
+        loader: searchLoader,
+      },
+      {
+        path: 'playlists',
+        element: <Playlists />,
+      },
+      {
+        path: 'profile',
+        element: <Profile />,
+      },
+      {
+        path: 'auth',
+        element: <Auth />,
+      },
+    ],
   },
 ])
 

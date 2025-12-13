@@ -16,7 +16,7 @@ export default function Auth() {
             <h1 className="text-2xl font-bold text-center">
               {isSignUp ? 'Create Account' : 'Sign In'}
             </h1>
-            <p className="text-center text-lightSecondary dark:text-darkSecondary mt-2">
+            <p className="text-center text-secondary-light dark:text-secondary-dark mt-2">
               {isSignUp ? 'Join Music Stream today' : 'Welcome back'}
             </p>
           </CardHeader>
@@ -28,26 +28,26 @@ export default function Auth() {
                 <input
                   type="text"
                   placeholder="John Doe"
-                  className="w-full px-4 py-2 border border-lightBorder dark:border-darkBorder rounded-md bg-lightSurface dark:bg-darkBg text-lightText dark:text-darkText placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-border-light dark:border-border-dark rounded-md bg-bg-light dark:bg-bg-dark text-text-light dark:text-text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                </div>
-                )}
+              </div>
+            )}
 
-                <div>
-                <label className="block text-sm font-medium mb-2">Email</label>
-                <input
+            <div>
+              <label className="block text-sm font-medium mb-2">Email</label>
+              <input
                 type="email"
                 placeholder="you@example.com"
-                className="w-full px-4 py-2 border border-lightBorder dark:border-darkBorder rounded-md bg-lightSurface dark:bg-darkBg text-lightText dark:text-darkText placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                </div>
+                className="w-full px-4 py-2 border border-border-light dark:border-border-dark rounded-md bg-bg-light dark:bg-bg-dark text-text-light dark:text-text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
 
-                <div>
-                <label className="block text-sm font-medium mb-2">Password</label>
-                <input
+            <div>
+              <label className="block text-sm font-medium mb-2">Password</label>
+              <input
                 type="password"
                 placeholder="••••••••"
-                className="w-full px-4 py-2 border border-lightBorder dark:border-darkBorder rounded-md bg-lightSurface dark:bg-darkBg text-lightText dark:text-darkText placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-border-light dark:border-border-dark rounded-md bg-bg-light dark:bg-bg-dark text-text-light dark:text-text-dark placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
@@ -56,7 +56,7 @@ export default function Auth() {
                 <label className="flex items-center">
                   <input
                     type="checkbox"
-                    className="rounded border-light-border dark:border-dark-border"
+                    className="rounded border-border-light dark:border-border-dark"
                   />
                   <span className="ml-2 text-sm">Remember me</span>
                 </label>
@@ -76,10 +76,10 @@ export default function Auth() {
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-lightBorder dark:border-darkBorder" />
+                <div className="w-full border-t border-border-light dark:border-border-dark" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-darkSurface text-lightSecondary dark:text-darkSecondary">
+                <span className="px-2 bg-surface-light dark:bg-surface-dark text-secondary-light dark:text-secondary-dark">
                   Or continue with
                 </span>
               </div>

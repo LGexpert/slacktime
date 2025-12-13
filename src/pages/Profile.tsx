@@ -10,7 +10,7 @@ export default function Profile() {
       <div className="space-y-8">
         <div className="space-y-4">
           <h1 className="heading-h1">Your Profile</h1>
-          <p className="text-xl text-lightSecondary dark:text-darkSecondary">
+          <p className="text-xl text-secondary-light dark:text-secondary-dark">
             Manage your account and preferences.
           </p>
         </div>
@@ -23,10 +23,10 @@ export default function Profile() {
             </CardHeader>
             <CardBody>
               <h3 className="text-xl font-semibold text-center">User Profile</h3>
-              <p className="text-sm text-lightSecondary dark:text-darkSecondary text-center mt-2">
+              <p className="text-sm text-secondary-light dark:text-secondary-dark text-center mt-2">
                 member@email.com
               </p>
-              <p className="text-sm text-lightSecondary dark:text-darkSecondary text-center mt-1">
+              <p className="text-sm text-secondary-light dark:text-secondary-dark text-center mt-1">
                 Member since 2024
               </p>
             </CardBody>
@@ -39,7 +39,7 @@ export default function Profile() {
                 <CardBody>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-blue-600">42</div>
-                    <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">Playlists</p>
+                    <p className="text-sm text-secondary-light dark:text-secondary-dark">Playlists</p>
                   </div>
                 </CardBody>
               </Card>
@@ -47,7 +47,7 @@ export default function Profile() {
                 <CardBody>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-green-600">256</div>
-                    <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">Favorite Songs</p>
+                    <p className="text-sm text-secondary-light dark:text-secondary-dark">Favorite Songs</p>
                   </div>
                 </CardBody>
               </Card>
@@ -55,7 +55,7 @@ export default function Profile() {
                 <CardBody>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-purple-600">18</div>
-                    <p className="text-sm text-light-text-secondary dark:text-dark-text-secondary">Following</p>
+                    <p className="text-sm text-secondary-light dark:text-secondary-dark">Following</p>
                   </div>
                 </CardBody>
               </Card>
@@ -73,7 +73,7 @@ export default function Profile() {
                     type="email"
                     value="member@email.com"
                     readOnly
-                    className="w-full px-4 py-2 border border-lightBorder dark:border-darkBorder rounded-md bg-lightSurface dark:bg-darkBg text-lightText dark:text-darkText"
+                    className="w-full px-4 py-2 border border-border-light dark:border-border-dark rounded-md bg-bg-light dark:bg-bg-dark text-text-light dark:text-text-dark"
                   />
                 </div>
                 <div>
@@ -81,14 +81,14 @@ export default function Profile() {
                   <input
                     type="text"
                     placeholder="Your name"
-                    className="w-full px-4 py-2 border border-lightBorder dark:border-darkBorder rounded-md bg-lightSurface dark:bg-darkBg text-lightText dark:text-darkText"
+                    className="w-full px-4 py-2 border border-border-light dark:border-border-dark rounded-md bg-bg-light dark:bg-bg-dark text-text-light dark:text-text-dark"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">Bio</label>
                   <textarea
                     placeholder="Tell us about yourself"
-                    className="w-full px-4 py-2 border border-lightBorder dark:border-darkBorder rounded-md bg-lightSurface dark:bg-darkBg text-lightText dark:text-darkText"
+                    className="w-full px-4 py-2 border border-border-light dark:border-border-dark rounded-md bg-bg-light dark:bg-bg-dark text-text-light dark:text-text-dark"
                     rows={3}
                   />
                 </div>
