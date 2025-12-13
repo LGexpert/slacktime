@@ -26,6 +26,7 @@ export function Head({
       {/* Open Graph Meta Tags */}
       <meta property="og:title" content={ogTitle || title} />
       <meta property="og:description" content={ogDescription || description} />
+      {canonical && <meta property="og:url" content={canonical} />}
       {ogImage && <meta property="og:image" content={ogImage} />}
       <meta property="og:type" content="website" />
 

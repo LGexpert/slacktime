@@ -1,39 +1,68 @@
-import { Card, CardBody, CardHeader, Head } from '../components'
+import { Link, type LoaderFunctionArgs, useLoaderData } from 'react-router-dom'
+import { Head } from '../components'
+import type { ApiGenre } from '../lib/api-types'
+import { apiGet } from '../lib/api'
+import { useCanonicalUrl } from '../lib/url'
+
+type GenresLoaderData = {
+  genres: ApiGenre[]
+}
+
+export async function loader(_args: LoaderFunctionArgs): Promise<GenresLoaderData> {
+  const genres = await apiGet<ApiGenre[]>('/api/genres')
+  return { genres }
+}
 
 export default function Genres() {
+  const { genres } = useLoaderData() as GenresLoaderData
+  const canonical = useCanonicalUrl()
+
   return (
     <>
       <Head
         title="Genres - Music Stream"
-        description="Explore music by genre"
+        description="Explore music videos by genre."
+        canonical={canonical}
       />
-      <div className="space-y-8">
-        <div className="space-y-4">
-          <h1 className="heading-h1">Genres</h1>
-          <p className="text-xl text-lightSecondary dark:text-darkSecondary">
-            Explore music by your favorite genres.
-          </p>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {['Rock', 'Pop', 'Hip Hop', 'Jazz', 'Classical', 'Electronic', 'R&B', 'Country', 'Folk'].map((genre, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <div className={`w-full h-40 rounded-lg mb-4 flex items-center justify-center ${
-                  i % 3 === 0 ? 'bg-gradient-to-br from-yellow-400 to-orange-500' :
-                  i % 3 === 1 ? 'bg-gradient-to-br from-cyan-400 to-blue-500' :
-                  'bg-gradient-to-br from-purple-400 to-pink-500'
-                }`} />
-              </CardHeader>
-              <CardBody>
-                <h3 className="text-xl font-semibold text-center">{genre}</h3>
-                <p className="text-sm text-lightSecondary dark:text-darkSecondary text-center mt-2">
-                  {50 + i * 10} playlists
+      <div className="space-y-8">
+        <header className="space-y-3">
+          <h1 className="heading-h1">Genres</h1>
+          <p className="text-xl text-secondary-light dark:text-secondary-dark">
+            Pick a genre to browse featured videos.
+          </p>
+        </header>
+
+        {genres.length === 0 ? (
+          <div className="rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark p-6">
+            <h2 className="text-lg font-semibold">No genres yet</h2>
+            <p className="mt-2 text-secondary-light dark:text-secondary-dark">
+              Seed the database using <code className="px-1">pnpm db:seed</code>.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {genres.map((genre) => (
+              <Link
+                key={genre.slug}
+                to={`/genres/${genre.slug}`}
+                className="group rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark p-6 shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-xl font-semibold group-hover:text-blue-600 transition-colors">
+                    {genre.name}
+                  </h2>
+                  <span className="text-sm text-secondary-light dark:text-secondary-dark">
+                    {genre.videoCount ?? 0} videos
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-secondary-light dark:text-secondary-dark">
+                  Browse {genre.name} tracks and discover related artists.
                 </p>
-              </CardBody>
-            </Card>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </>
   )

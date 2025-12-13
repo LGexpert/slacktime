@@ -10,7 +10,7 @@ export default function Playlists() {
       <div className="space-y-8">
         <div className="space-y-4">
           <h1 className="heading-h1">Playlists</h1>
-          <p className="text-xl text-lightSecondary dark:text-darkSecondary">
+          <p className="text-xl text-secondary-light dark:text-secondary-dark">
             Browse playlists or create your own.
           </p>
         </div>
@@ -23,7 +23,7 @@ export default function Playlists() {
                 <h3 className="text-lg font-semibold">Playlist {i}</h3>
               </CardHeader>
               <CardBody>
-                <p className="text-sm text-lightSecondary dark:text-darkSecondary">
+                <p className="text-sm text-secondary-light dark:text-secondary-dark">
                   {10 * i} songs • {2 * i} hours
                 </p>
               </CardBody>
