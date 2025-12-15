@@ -17,7 +17,7 @@ export function VideoPlayer({ video }: VideoPlayerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showControls, setShowControls] = useState(true)
   const containerRef = useRef<HTMLDivElement>(null)
-  const hideControlsTimeoutRef = useRef<number | undefined>(undefined)
+  const hideControlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const sources = video.streamingSources
   const currentSource = sources[selectedQuality] || sources[0]
@@ -28,7 +28,9 @@ export function VideoPlayer({ video }: VideoPlayerProps) {
 
     const handleTimeUpdate = () => {
       setCurrentTime(videoEl.currentTime)
-      window.dispatchEvent(new CustomEvent('videotimeupdate', { detail: { currentTime: videoEl.currentTime * 1000 } }))
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('videotimeupdate', { detail: { currentTime: videoEl.currentTime * 1000 } }))
+      }
     }
 
     const handleLoadedMetadata = () => {
@@ -59,13 +61,18 @@ export function VideoPlayer({ video }: VideoPlayerProps) {
 
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement)
+      if (typeof document !== 'undefined') {
+        setIsFullscreen(!!document.fullscreenElement)
+      }
     }
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange)
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    if (typeof document !== 'undefined') {
+      document.addEventListener('fullscreenchange', handleFullscreenChange)
+      return () => {
+        document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      }
     }
+    return () => {}
   }, [])
 
   useEffect(() => {
@@ -78,7 +85,7 @@ export function VideoPlayer({ video }: VideoPlayerProps) {
     }
 
     if (isPlaying) {
-      hideControlsTimeoutRef.current = window.setTimeout(() => {
+      hideControlsTimeoutRef.current = (typeof window !== 'undefined' ? window.setTimeout : setTimeout)(() => {
         setShowControls(false)
       }, 3000)
     }
@@ -156,10 +163,12 @@ export function VideoPlayer({ video }: VideoPlayerProps) {
     if (!container) return
 
     try {
-      if (!document.fullscreenElement) {
-        await container.requestFullscreen()
-      } else {
-        await document.exitFullscreen()
+      if (typeof document !== 'undefined') {
+        if (!document.fullscreenElement) {
+          await container.requestFullscreen()
+        } else {
+          await document.exitFullscreen()
+        }
       }
     } catch (err) {
       console.error('Fullscreen error:', err)
@@ -216,8 +225,11 @@ export function VideoPlayer({ video }: VideoPlayerProps) {
       }
     }
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    if (typeof window !== 'undefined') {
+      window.addEventListener('keydown', handleKeyDown)
+      return () => window.removeEventListener('keydown', handleKeyDown)
+    }
+    return () => {}
   }, [currentTime, duration, isPlaying])
 
   return (

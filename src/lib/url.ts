@@ -1,5 +1,3 @@
-import { useLocation } from 'react-router-dom'
-
 export function buildCanonicalUrl(origin: string, pathWithSearch: string) {
   const url = new URL(pathWithSearch, origin)
 
@@ -18,7 +16,8 @@ export function buildCanonicalUrl(origin: string, pathWithSearch: string) {
 }
 
 export function useCanonicalUrl() {
-  const location = useLocation()
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  return origin ? buildCanonicalUrl(origin, `${location.pathname}${location.search}`) : undefined
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+  const search = typeof window !== 'undefined' ? window.location.search : ''
+  return origin ? buildCanonicalUrl(origin, `${pathname}${search}`) : undefined
 }

@@ -13,6 +13,8 @@ export function LyricsPanel({ lyrics }: LyricsPanelProps) {
   const animationFrameRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const handleTimeUpdate = (e: Event) => {
       const customEvent = e as CustomEvent<{ currentTime: number }>
       const currentTimeMs = customEvent.detail.currentTime
@@ -24,7 +26,9 @@ export function LyricsPanel({ lyrics }: LyricsPanelProps) {
     window.addEventListener('videotimeupdate', handleTimeUpdate)
 
     return () => {
-      window.removeEventListener('videotimeupdate', handleTimeUpdate)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('videotimeupdate', handleTimeUpdate)
+      }
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
       }
@@ -73,11 +77,13 @@ export function LyricsPanel({ lyrics }: LyricsPanelProps) {
   const handleLineClick = (index: number) => {
     const timeMs = lyrics[index].timeMs
 
-    window.dispatchEvent(
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
       new CustomEvent('seekvideo', {
         detail: { timeMs },
       }),
-    )
+      )
+    }
 
     setCurrentLineIndex(index)
   }
@@ -91,6 +97,8 @@ export function LyricsPanel({ lyrics }: LyricsPanelProps) {
   }
 
   useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return
+
     const handleSeekVideo = (e: Event) => {
       const customEvent = e as CustomEvent<{ timeMs: number }>
       const timeMs = customEvent.detail.timeMs
@@ -104,7 +112,9 @@ export function LyricsPanel({ lyrics }: LyricsPanelProps) {
 
     window.addEventListener('seekvideo', handleSeekVideo)
     return () => {
-      window.removeEventListener('seekvideo', handleSeekVideo)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('seekvideo', handleSeekVideo)
+      }
     }
   }, [])
 

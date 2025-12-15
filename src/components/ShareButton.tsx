@@ -10,13 +10,15 @@ export function ShareButton({ url, title }: ShareButtonProps) {
 
   const handleShare = async () => {
     try {
-      if (navigator.share) {
+      if (typeof navigator !== 'undefined' && navigator.share) {
         await navigator.share({
           title,
           url,
         })
       } else {
-        await navigator.clipboard.writeText(url)
+        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+          await navigator.clipboard.writeText(url)
+        }
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
       }
