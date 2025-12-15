@@ -13,10 +13,12 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 function getSystemTheme(): Theme {
+  if (typeof window === 'undefined') return 'light'
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
 function applyTheme(theme: Theme) {
+  if (typeof document === 'undefined') return
   const root = document.documentElement
   if (theme === 'dark') {
     root.classList.add('dark')
@@ -34,7 +36,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [mounted, preference])
 
   useEffect(() => {
-    const stored = localStorage.getItem('themePreference') as ThemePreference | null
+    const stored = typeof window !== 'undefined' 
+      ? localStorage.getItem('themePreference') as ThemePreference | null
+      : null
     const initialPreference = stored || 'system'
 
     setPreferenceState(initialPreference)
@@ -45,11 +49,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (!mounted) return
 
     applyTheme(theme)
-    localStorage.setItem('themePreference', preference)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('themePreference', preference)
+    }
   }, [mounted, preference, theme])
 
   useEffect(() => {
-    if (!mounted || preference !== 'system') return
+    if (!mounted || preference !== 'system' || typeof window === 'undefined') return
 
     const media = window.matchMedia('(prefers-color-scheme: dark)')
     const listener = () => {

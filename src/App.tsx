@@ -1,11 +1,14 @@
+import { Suspense } from 'react'
 import { RouterProvider } from 'react-router-dom'
 import { ThemeProvider } from './context/ThemeContext'
-import router from './router'
+import { getClientRouter } from './router'
 
 function App() {
   return (
     <ThemeProvider>
-      <RouterProvider router={router} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <RouterProvider router={getClientRouter()} />
+      </Suspense>
     </ThemeProvider>
   )
 }

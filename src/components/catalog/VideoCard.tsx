@@ -1,12 +1,18 @@
 import { Link } from 'react-router-dom'
 import type { ApiVideo } from '../../lib/api-types'
 import { formatCompactNumber, formatDuration } from '../../lib/format'
+import { useAuth } from '../../context/AuthContext'
+import { useCollections } from '../../context/CollectionsContext'
 
 interface VideoCardProps {
   video: ApiVideo
 }
 
 export function VideoCard({ video }: VideoCardProps) {
+  const { user } = useAuth()
+  const collectionsContext = useCollections()
+  const isFavorited = collectionsContext.favorites?.has(video.id) ?? false
+  const toggleFavorite = collectionsContext.toggleFavorite || (() => {})
   const primaryArtist = video.artists[0]
 
   return (
@@ -79,12 +85,25 @@ export function VideoCard({ video }: VideoCardProps) {
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <Link
-            to="/auth"
-            className="text-xs font-medium text-blue-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          >
-            Sign in to save
-          </Link>
+          {user ? (
+            <button
+              onClick={() => toggleFavorite(video.id)}
+              className={`text-xs font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                isFavorited
+                  ? 'text-red-600 hover:text-red-700'
+                  : 'text-blue-600 hover:text-blue-700'
+              }`}
+            >
+              {isFavorited ? '❤ Saved' : '♡ Save'}
+            </button>
+          ) : (
+            <Link
+              to="/auth/sign-in"
+              className="text-xs font-medium text-blue-600 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              Sign in to save
+            </Link>
+          )}
           <span className="text-xs text-secondary-light dark:text-secondary-dark">
             {formatCompactNumber(video.likes)} likes
           </span>

@@ -1,6 +1,7 @@
 import 'dotenv/config'
 
-import type { IncomingMessage, ServerResponse } from 'node:http'
+import type { IncomingMessage, ServerResponse } from 'http'
+import type { ViteDevServer, Plugin } from 'vite'
 
 import {
   and,
@@ -13,7 +14,6 @@ import {
   sql,
 } from 'drizzle-orm'
 import type { SQL } from 'drizzle-orm'
-import type { Plugin } from 'vite'
 
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
 
@@ -1948,39 +1948,109 @@ async function handleApiRequest(req: IncomingMessage, res: ServerResponse) {
     return
   }
 
+  const cookies = req.headers.cookie || ''
+  const requestUrl = req.url ?? '/'
+  const result = await render(requestUrl, 'http://localhost:5173', cookies)
+
+  if (result instanceof Response) {
+    const body = await result.text()
+    if (!res.headersSent) {
+      res.statusCode = result.status
+      res.setHeader('Content-Type', result.headers.get('Content-Type') || 'text/html; charset=utf-8')
+      res.setHeader('Content-Length', Buffer.byteLength(body))
+    }
+    res.end(body)
+    return
+  }
+
   respondJson(res, 404, { error: 'Not Found' })
 }
 
-export function catalogApiPlugin(): Plugin {
-  return {
-    name: 'catalog-api',
-    configureServer(server) {
-      server.middlewares.use((req, res, next) => {
+// Minimal NextFunction to avoid connect typings
+type NextFunction = (err?: any) => void
+
+// Minimal SSR render function - replace with actual server-side rendering
+async function render(url: string, baseUrl: string, cookies: string): Promise<Response> {
+  const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Slacktime</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="${baseUrl}/src/main.tsx"></script>
+  </body>
+</html>`
+  return new Response(html, {
+    status: 200,
+    headers: { 'Content-Type': 'text/html; charset=utf-8' },
+  })
+}
+
+export const catalogApiPlugin: Plugin = {
+  name: 'catalog-api',
+  configureServer(server: ViteDevServer) {
+    // API routes middleware - handles /api/* requests
+    server.middlewares.use(
+      (req: IncomingMessage, res: ServerResponse, next: NextFunction) => {
         if (!req.url?.startsWith('/api/')) return next()
         void handleApiRequest(req, res).catch((err) => {
           if (!res.headersSent) {
             respondJson(res, 500, { error: (err as Error).message })
           }
         })
-      })
+      }
+    )
 
-      server.httpServer?.once('close', () => {
-        void _pool?.end()
-      })
-    },
-    configurePreviewServer(server) {
-      server.middlewares.use((req, res, next) => {
-        if (!req.url?.startsWith('/api/')) return next()
-        void handleApiRequest(req, res).catch((err) => {
+    // HTML/SSR middleware - handles page requests
+    server.middlewares.use(
+      async (req: IncomingMessage, res: ServerResponse, next: NextFunction) => {
+        const accept = req.headers.accept || ''
+        if (!accept.includes('text/html')) return next()
+
+        const cookies = req.headers.cookie || ''
+        const url = (req as any).originalUrl || req.url || '/'
+
+        try {
+          // Load the entry-server module for true SSR
+          const { render } = await server.ssrLoadModule('/src/entry-server.tsx')
+          
+          // Render the app server-side with cookies for auth
+          const { html, status, hydrationData } = await render(url, 'http://localhost:5173', cookies)
+
+          // Transform the HTML through Vite to inject CSS and HMR
+          const template = await server.transformIndexHtml(url, `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Slacktime</title>
+  </head>
+  <body>
+    <div id="root">${html}</div>
+    <script>window.__staticRouterHydrationData = ${JSON.stringify(hydrationData)};</script>
+    <script type="module" src="/src/entry-client.tsx"></script>
+  </body>
+</html>`)
+
           if (!res.headersSent) {
-            respondJson(res, 500, { error: (err as Error).message })
+            res.statusCode = status
+            res.setHeader('Content-Type', 'text/html; charset=utf-8')
+            res.setHeader('Content-Length', Buffer.byteLength(template))
           }
-        })
-      })
+          res.end(template)
+        } catch (err) {
+          console.error('SSR Error:', err)
+          next(err)
+        }
+      }
+    )
 
-      server.httpServer?.once('close', () => {
-        void _pool?.end()
-      })
-    },
-  }
+    // Cleanup on server close
+    server.httpServer?.once('close', () => {
+      void _pool?.end()
+    })
+  },
 }
