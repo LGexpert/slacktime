@@ -1,4 +1,4 @@
-import { createBrowserRouter, redirect } from 'react-router-dom'
+import { createBrowserRouter, redirect, type RouteObject } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import Home, { loader as homeLoader } from './pages/Home'
 import Videos, { loader as videosLoader } from './pages/Videos'
@@ -19,29 +19,32 @@ import AuthReset, { action as resetAction } from './pages/AuthReset'
 import { apiGet } from './lib/api'
 import type { ApiMeResponse } from './lib/api-types'
 
-export async function rootLoader() {
+export async function rootLoader({ request }: { request: Request }) {
+  const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
   try {
-    const res = await apiGet<ApiMeResponse>('/api/me')
+    const res = await apiGet<ApiMeResponse>('/api/me', { baseUrl })
     return { user: res.user }
   } catch {
     return { user: null }
   }
 }
 
-export async function requireAuthLoader() {
-  const res = await apiGet<ApiMeResponse>('/api/me')
-  if (!res.user) {
-    throw redirect('/auth/sign-in')
-  }
+export async function requireAuthLoader({ request }: { request: Request }) {
+  const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+  const res = await apiGet<ApiMeResponse>('/api/me', { baseUrl })
+  if (!res.user) throw redirect('/auth/sign-in')
   return { user: res.user }
 }
 
-const router = createBrowserRouter([
+export const routes: RouteObject[] = [
   {
     id: 'root',
     path: '/',
     element: <Layout />,
     loader: rootLoader,
+    errorElement: <div style={{ padding: 24 }}>Unexpected error. Please try again.</div>,
     children: [
       {
         index: true,
@@ -132,8 +135,15 @@ const router = createBrowserRouter([
           },
         ],
       },
+      {
+        path: '*',
+        element: <div style={{ padding: 24 }}>Page not found</div>,
+      },
     ],
   },
-])
+]
 
-export default router
+export function getClientRouter(hydrationData?: unknown) {
+  // IMPORTANT: only call createBrowserRouter on the client
+  return createBrowserRouter(routes, hydrationData ? { hydrationData } : undefined)
+}

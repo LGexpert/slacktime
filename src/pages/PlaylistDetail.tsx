@@ -16,14 +16,18 @@ import { usePlaybackQueue } from '../context/PlaybackQueueContext'
 
 type LoaderData = ApiPlaylistDetailResponse
 
-export async function loader({ params }: LoaderFunctionArgs): Promise<LoaderData> {
+export async function loader({ params, request }: LoaderFunctionArgs): Promise<LoaderData> {
   const playlistId = params.playlistId
   if (!playlistId) {
     throw new Response('Missing playlist id', { status: 400 })
   }
 
+  // Extract baseUrl from request for SSR
+  const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+
   try {
-    return await apiGet<ApiPlaylistDetailResponse>(`/api/playlists/${encodeURIComponent(playlistId)}`)
+    return await apiGet<ApiPlaylistDetailResponse>(`/api/playlists/${encodeURIComponent(playlistId)}`, { baseUrl })
   } catch (err) {
     if ((err as Error).message.toLowerCase().includes('unauthorized')) {
       throw redirect('/auth/sign-in')
@@ -65,7 +69,9 @@ export default function PlaylistDetail() {
         description: description.trim() || null,
         isPublic,
       })
-      window.location.reload()
+      if (typeof window !== 'undefined') {
+        window.location.reload()
+      }
     } catch (err) {
       setError((err as Error).message)
     } finally {
@@ -115,7 +121,9 @@ export default function PlaylistDetail() {
 
     try {
       await apiDelete(`/api/playlists/${encodeURIComponent(data.playlist.id)}/items/${encodeURIComponent(itemId)}`)
-      window.location.reload()
+      if (typeof window !== 'undefined') {
+        window.location.reload()
+      }
     } catch (err) {
       setError((err as Error).message)
     } finally {

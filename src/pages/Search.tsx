@@ -29,10 +29,11 @@ type SearchLoaderData = {
 
 export async function loader({ request }: LoaderFunctionArgs): Promise<SearchLoaderData> {
   const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
 
   const [results, facets] = await Promise.all([
-    apiGet<SearchResponse>(`/api/search${url.search}`),
-    apiGet<SearchLoaderData['facets']>('/api/facets'),
+    apiGet<SearchResponse>(`/api/search${url.search}`, { baseUrl }),
+    apiGet<SearchLoaderData['facets']>('/api/facets', { baseUrl }),
   ])
 
   return { results, facets }

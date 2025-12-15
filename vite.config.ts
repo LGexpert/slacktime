@@ -5,5 +5,12 @@ import { catalogApiPlugin } from './server/catalogApi'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), catalogApiPlugin()],
+  plugins: [react(), catalogApiPlugin],
+  build: {
+    rollupOptions: {
+      input: {
+        main: './index.html',
+      },
+    },
+  },
 })

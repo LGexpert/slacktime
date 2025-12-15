@@ -21,9 +21,11 @@ type VideosLoaderData = {
 
 export async function loader({ request }: LoaderFunctionArgs): Promise<VideosLoaderData> {
   const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+  
   const [videos, facets] = await Promise.all([
-    apiGet<VideosResponse>(`/api/videos${url.search}`),
-    apiGet<VideosLoaderData['facets']>('/api/facets'),
+    apiGet<VideosResponse>(`/api/videos${url.search}`, { baseUrl }),
+    apiGet<VideosLoaderData['facets']>('/api/facets', { baseUrl }),
   ])
 
   return { videos, facets }

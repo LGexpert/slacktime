@@ -9,8 +9,11 @@ type ArtistsLoaderData = {
   artists: ApiArtist[]
 }
 
-export async function loader(_args: LoaderFunctionArgs): Promise<ArtistsLoaderData> {
-  const artists = await apiGet<ApiArtist[]>('/api/artists')
+export async function loader({ request }: LoaderFunctionArgs): Promise<ArtistsLoaderData> {
+  const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+
+  const artists = await apiGet<ApiArtist[]>('/api/artists', { baseUrl })
   return { artists }
 }
 

@@ -13,12 +13,15 @@ type LoaderData = {
 }
 
 export async function loader({ request }: LoaderFunctionArgs): Promise<LoaderData> {
-  const me = await apiGet<ApiMeResponse>('/api/me')
+  // Extract baseUrl from request for SSR
+  const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+
+  const me = await apiGet<ApiMeResponse>('/api/me', { baseUrl })
   if (!me.user) {
     throw redirect('/auth/sign-in')
   }
 
-  const url = new URL(request.url)
   const tab = (url.searchParams.get('tab') || 'favorites') as LoaderData['tab']
   const sort = url.searchParams.get('sort') || 'added'
   const q = url.searchParams.get('q') || ''
@@ -27,6 +30,7 @@ export async function loader({ request }: LoaderFunctionArgs): Promise<LoaderDat
 
   const items = await apiGet<ApiCollectionVideo[]>(
     `${endpoint}?sort=${encodeURIComponent(sort)}&q=${encodeURIComponent(q)}`,
+    { baseUrl },
   )
 
   return { tab, sort, q, items }

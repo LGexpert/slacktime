@@ -13,9 +13,16 @@ async function parseError(res: Response) {
   return text || res.statusText
 }
 
-export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
-    credentials: 'same-origin',
+interface ApiRequestOptions extends RequestInit {
+  baseUrl?: string
+}
+
+export async function apiRequest<T>(path: string, init?: ApiRequestOptions): Promise<T> {
+  const baseUrl = init?.baseUrl || ''
+  const url = path.startsWith('http') ? path : `${baseUrl}${path}`
+  
+  const res = await fetch(url, {
+    credentials: 'include',
     ...init,
     headers: {
       Accept: 'application/json',
@@ -31,11 +38,11 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<T
   return (await res.json()) as T
 }
 
-export async function apiGet<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiGet<T>(path: string, init?: ApiRequestOptions): Promise<T> {
   return apiRequest<T>(path, { ...init, method: 'GET' })
 }
 
-export async function apiPost<T>(path: string, body?: unknown, init?: RequestInit): Promise<T> {
+export async function apiPost<T>(path: string, body?: unknown, init?: ApiRequestOptions): Promise<T> {
   return apiRequest<T>(path, {
     ...init,
     method: 'POST',
@@ -47,11 +54,11 @@ export async function apiPost<T>(path: string, body?: unknown, init?: RequestIni
   })
 }
 
-export async function apiDelete<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiDelete<T>(path: string, init?: ApiRequestOptions): Promise<T> {
   return apiRequest<T>(path, { ...init, method: 'DELETE' })
 }
 
-export async function apiPut<T>(path: string, body?: unknown, init?: RequestInit): Promise<T> {
+export async function apiPut<T>(path: string, body?: unknown, init?: ApiRequestOptions): Promise<T> {
   return apiRequest<T>(path, {
     ...init,
     method: 'PUT',

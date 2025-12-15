@@ -8,8 +8,11 @@ type GenresLoaderData = {
   genres: ApiGenre[]
 }
 
-export async function loader(_args: LoaderFunctionArgs): Promise<GenresLoaderData> {
-  const genres = await apiGet<ApiGenre[]>('/api/genres')
+export async function loader({ request }: LoaderFunctionArgs): Promise<GenresLoaderData> {
+  const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+
+  const genres = await apiGet<ApiGenre[]>('/api/genres', { baseUrl })
   return { genres }
 }
 

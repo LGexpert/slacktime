@@ -11,16 +11,19 @@ type LoaderData = {
   watchlistCount: number
 }
 
-export async function loader(_args: LoaderFunctionArgs): Promise<LoaderData> {
-  const me = await apiGet<ApiMeResponse>('/api/me')
+export async function loader({ request }: LoaderFunctionArgs): Promise<LoaderData> {
+  const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+
+  const me = await apiGet<ApiMeResponse>('/api/me', { baseUrl })
   if (!me.user) {
     throw redirect('/auth/sign-in')
   }
 
   const [favoritesRes, watchlistRes, playlistsRes] = await Promise.all([
-    apiGet<{ ids: string[] }>('/api/favorites/ids'),
-    apiGet<{ ids: string[] }>('/api/watchlist/ids'),
-    apiGet<unknown[]>('/api/playlists'),
+    apiGet<{ ids: string[] }>('/api/favorites/ids', { baseUrl }),
+    apiGet<{ ids: string[] }>('/api/watchlist/ids', { baseUrl }),
+    apiGet<unknown[]>('/api/playlists', { baseUrl }),
   ])
 
   return {
