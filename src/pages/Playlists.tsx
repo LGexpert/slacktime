@@ -9,13 +9,16 @@ type LoaderData = {
   playlists: ApiPlaylistSummary[]
 }
 
-export async function loader(_args: LoaderFunctionArgs): Promise<LoaderData> {
-  const me = await apiGet<ApiMeResponse>('/api/me')
+export async function loader({ request }: LoaderFunctionArgs): Promise<LoaderData> {
+  const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+
+  const me = await apiGet<ApiMeResponse>('/api/me', { baseUrl })
   if (!me.user) {
     throw redirect('/auth/sign-in')
   }
 
-  const playlists = await apiGet<ApiPlaylistSummary[]>('/api/playlists')
+  const playlists = await apiGet<ApiPlaylistSummary[]>('/api/playlists', { baseUrl })
   return { playlists }
 }
 
@@ -58,7 +61,9 @@ export default function Playlists() {
     setBusy(true)
     try {
       await apiDelete(`/api/playlists/${encodeURIComponent(playlistId)}`)
-      window.location.reload()
+      if (typeof window !== 'undefined') {
+        window.location.reload()
+      }
     } catch (err) {
       setError((err as Error).message)
     } finally {

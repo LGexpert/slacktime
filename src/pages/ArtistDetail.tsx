@@ -21,12 +21,14 @@ export async function loader({ request, params }: LoaderFunctionArgs): Promise<A
     throw new Response('Missing artist slug', { status: 400 })
   }
 
+  // Extract baseUrl from request for SSR
   const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
   url.searchParams.set('artist', slug)
 
   const [artist, videos] = await Promise.all([
-    apiGet<ApiArtist>(`/api/artists/${encodeURIComponent(slug)}`),
-    apiGet<VideosResponse>(`/api/videos?${url.searchParams.toString()}`),
+    apiGet<ApiArtist>(`/api/artists/${encodeURIComponent(slug)}`, { baseUrl }),
+    apiGet<VideosResponse>(`/api/videos?${url.searchParams.toString()}`, { baseUrl }),
   ])
 
   return { artist, videos }

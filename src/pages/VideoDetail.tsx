@@ -14,13 +14,17 @@ type VideoDetailLoaderData = {
   video: ApiVideoDetail
 }
 
-export async function loader({ params }: LoaderFunctionArgs): Promise<VideoDetailLoaderData> {
+export async function loader({ params, request }: LoaderFunctionArgs): Promise<VideoDetailLoaderData> {
   const slug = params.slug
   if (!slug) {
     throw new Response('Missing video slug', { status: 400 })
   }
 
-  const video = await apiGet<ApiVideoDetail>(`/api/videos/${encodeURIComponent(slug)}`)
+  // Get base URL from request for SSR
+  const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+  
+  const video = await apiGet<ApiVideoDetail>(`/api/videos/${encodeURIComponent(slug)}`, { baseUrl })
 
   return { video }
 }

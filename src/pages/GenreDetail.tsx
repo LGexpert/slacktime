@@ -21,12 +21,14 @@ export async function loader({ request, params }: LoaderFunctionArgs): Promise<G
     throw new Response('Missing genre slug', { status: 400 })
   }
 
+  // Extract baseUrl from request for SSR
   const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
   url.searchParams.set('genre', slug)
 
   const [genre, videos] = await Promise.all([
-    apiGet<ApiGenre>(`/api/genres/${encodeURIComponent(slug)}`),
-    apiGet<VideosResponse>(`/api/videos?${url.searchParams.toString()}`),
+    apiGet<ApiGenre>(`/api/genres/${encodeURIComponent(slug)}`, { baseUrl }),
+    apiGet<VideosResponse>(`/api/videos?${url.searchParams.toString()}`, { baseUrl }),
   ])
 
   return { genre, videos }

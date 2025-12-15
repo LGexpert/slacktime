@@ -11,11 +11,14 @@ type HomeLoaderData = {
   moods: ApiMood[]
 }
 
-export async function loader(_args: LoaderFunctionArgs): Promise<HomeLoaderData> {
+export async function loader({ request }: LoaderFunctionArgs): Promise<HomeLoaderData> {
+  const url = new URL(request.url)
+  const baseUrl = `${url.protocol}//${url.host}`
+
   const [featured, genres, moods] = await Promise.all([
-    apiGet<FeaturedResponse>('/api/featured'),
-    apiGet<ApiGenre[]>('/api/genres'),
-    apiGet<ApiMood[]>('/api/moods'),
+    apiGet<FeaturedResponse>('/api/featured', { baseUrl }),
+    apiGet<ApiGenre[]>('/api/genres', { baseUrl }),
+    apiGet<ApiMood[]>('/api/moods', { baseUrl }),
   ])
 
   return {

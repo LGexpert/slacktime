@@ -16,8 +16,14 @@ type CollectionsContextValue = {
 
 const CollectionsContext = createContext<CollectionsContextValue | undefined>(undefined)
 
+function getBaseUrl() {
+  if (typeof window !== 'undefined') return window.location.origin
+  return process.env.VITE_API_BASE_URL || 'http://localhost:5173'
+}
+
 export function CollectionsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
+  const baseUrl = getBaseUrl()
 
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [watchlist, setWatchlist] = useState<Set<string>>(new Set())
@@ -32,9 +38,9 @@ export function CollectionsProvider({ children }: { children: React.ReactNode })
     }
 
     const [favoritesRes, watchlistRes, playlistsRes] = await Promise.all([
-      apiGet<{ ids: string[] }>('/api/favorites/ids'),
-      apiGet<{ ids: string[] }>('/api/watchlist/ids'),
-      apiGet<ApiPlaylistSummary[]>('/api/playlists'),
+      apiGet<{ ids: string[] }>('/api/favorites/ids', { baseUrl }),
+      apiGet<{ ids: string[] }>('/api/watchlist/ids', { baseUrl }),
+      apiGet<ApiPlaylistSummary[]>('/api/playlists', { baseUrl }),
     ])
 
     setFavorites(new Set(favoritesRes.ids))
@@ -47,7 +53,7 @@ export function CollectionsProvider({ children }: { children: React.ReactNode })
   }, [user?.id])
 
   const toggleFavorite = async (videoId: string) => {
-    const res = await apiPost<{ isFavorited: boolean }>('/api/favorites/toggle', { videoId })
+    const res = await apiPost<{ isFavorited: boolean }>('/api/favorites/toggle', { videoId }, { baseUrl })
     setFavorites((prev) => {
       const next = new Set(prev)
       if (res.isFavorited) {
@@ -61,7 +67,7 @@ export function CollectionsProvider({ children }: { children: React.ReactNode })
   }
 
   const toggleWatchlist = async (videoId: string) => {
-    const res = await apiPost<{ isWatchlisted: boolean }>('/api/watchlist/toggle', { videoId })
+    const res = await apiPost<{ isWatchlisted: boolean }>('/api/watchlist/toggle', { videoId }, { baseUrl })
     setWatchlist((prev) => {
       const next = new Set(prev)
       if (res.isWatchlisted) {
@@ -75,16 +81,20 @@ export function CollectionsProvider({ children }: { children: React.ReactNode })
   }
 
   const addToPlaylist = async (playlistId: string, videoId: string) => {
-    await apiPost(`/api/playlists/${encodeURIComponent(playlistId)}/items`, { videoId })
+    await apiPost(`/api/playlists/${encodeURIComponent(playlistId)}/items`, { videoId }, { baseUrl })
     await refreshCollections()
   }
 
   const createPlaylist = async (input: { title: string; description?: string | null; isPublic?: boolean }) => {
-    const res = await apiPost<{ id?: string }>('/api/playlists', {
-      title: input.title,
-      description: input.description ?? null,
-      isPublic: Boolean(input.isPublic),
-    })
+    const res = await apiPost<{ id?: string }>(
+      '/api/playlists',
+      {
+        title: input.title,
+        description: input.description ?? null,
+        isPublic: Boolean(input.isPublic),
+      },
+      { baseUrl },
+    )
 
     if (!res.id) {
       throw new Error('Failed to create playlist')
